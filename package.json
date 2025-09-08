@@ -9,7 +9,7 @@
     "deploy": "vercel --prod"
   },
   "dependencies": {
-    "puppeteer-core": "^13.5.0",
+    "puppeteer-core": "^10.1.0",
     "chrome-aws-lambda": "^10.1.0"
   },
   "devDependencies": {
