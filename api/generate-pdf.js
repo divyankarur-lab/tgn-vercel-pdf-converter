@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-core';
-import chromium from 'chrome-aws-lambda';
+import chromium from '@sparticuz/chromium';
 
 export default async function handler(req, res) {
   // Handle CORS preflight
@@ -27,11 +27,11 @@ export default async function handler(req, res) {
     console.log('🚀 Starting PDF generation...');
     console.log('Runtime environment:', process.env.VERCEL ? 'Vercel' : 'Local');
     
-    // Launch browser with chrome-aws-lambda
-    browser = await chromium.puppeteer.launch({
+    // Launch browser with modern @sparticuz/chromium
+    browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath,
+      executablePath: await chromium.executablePath(),
       headless: chromium.headless,
       ignoreHTTPSErrors: true,
     });
