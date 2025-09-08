@@ -114,40 +114,81 @@ export default async function handler(req, res) {
                 document.getElementById('status').className = 'status loading';
                 document.getElementById('generateBtn').disabled = true;
                 
-                // PDF generation options optimized for your agreement template
-                const options = {
-                    margin: [10, 10, 10, 10],
-                    filename: 'agreement.pdf',
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { 
-                        scale: 2,
-                        useCORS: true,
-                        letterRendering: true
-                    },
-                    jsPDF: { 
-                        unit: 'mm', 
-                        format: 'a4', 
-                        orientation: 'portrait',
-                        compress: true
-                    }
-                };
-                
                 // Create temporary container for PDF generation
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = htmlContent;
-                tempDiv.style.width = '210mm';
-                tempDiv.style.minHeight = '297mm';
-                tempDiv.style.padding = '20mm';
+                
+                // Better styling for PDF conversion
+                tempDiv.style.width = '794px'; // A4 width in pixels
+                tempDiv.style.minHeight = '1123px'; // A4 height in pixels  
+                tempDiv.style.padding = '40px';
                 tempDiv.style.margin = '0';
                 tempDiv.style.backgroundColor = 'white';
+                tempDiv.style.fontFamily = 'Arial, sans-serif';
+                tempDiv.style.fontSize = '16px';
+                tempDiv.style.lineHeight = '1.5';
+                tempDiv.style.color = 'black';
                 tempDiv.style.position = 'absolute';
                 tempDiv.style.top = '-9999px';
                 tempDiv.style.left = '-9999px';
                 
+                // Ensure all fonts are web-safe
+                const allElements = tempDiv.querySelectorAll('*');
+                allElements.forEach(el => {
+                    const computedStyle = window.getComputedStyle ? window.getComputedStyle(el) : el.currentStyle;
+                    if (computedStyle && computedStyle.fontFamily) {
+                        el.style.fontFamily = 'Arial, sans-serif';
+                    }
+                });
+                
                 document.body.appendChild(tempDiv);
                 
+                // Wait for images to load
+                const images = tempDiv.querySelectorAll('img');
+                const imagePromises = Array.from(images).map(img => {
+                    return new Promise((resolve) => {
+                        if (img.complete) {
+                            resolve();
+                        } else {
+                            img.onload = resolve;
+                            img.onerror = resolve; // Continue even if image fails
+                            // Timeout after 5 seconds
+                            setTimeout(resolve, 5000);
+                        }
+                    });
+                });
+                
+                await Promise.all(imagePromises);
+                
+                // Wait a bit more for any remaining rendering
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // PDF generation options - simplified for better compatibility
+                const options = {
+                    margin: [10, 10, 10, 10],
+                    filename: 'agreement.pdf',
+                    image: { 
+                        type: 'jpeg', 
+                        quality: 0.95
+                    },
+                    html2canvas: { 
+                        scale: 1.5, // Reduced scale for better stability
+                        useCORS: true,
+                        allowTaint: true,
+                        letterRendering: true,
+                        logging: true,
+                        width: 794,
+                        height: 1123
+                    },
+                    jsPDF: { 
+                        unit: 'mm', 
+                        format: 'a4', 
+                        orientation: 'portrait'
+                    }
+                };
+                
                 // Generate PDF
-                const pdf = await html2pdf().set(options).from(tempDiv).save();
+                await html2pdf().set(options).from(tempDiv).save();
                 
                 // Clean up
                 document.body.removeChild(tempDiv);
