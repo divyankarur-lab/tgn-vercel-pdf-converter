@@ -1,8 +1,13 @@
 {
-  "functions": {
-    "api/generate-pdf.js": {
-      "maxDuration": 30,
-      "memory": 1024
+  "build": {
+    "env": {
+      "PLAYWRIGHT_BROWSERS_PATH": "0"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/generate-pdf.js"
+    }
+  ]
 }

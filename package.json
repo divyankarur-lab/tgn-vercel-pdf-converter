@@ -1,20 +1,15 @@
 {
-  "name": "tgn-pdf-service",
+  "name": "pdf-converter-api",
   "version": "1.0.0",
-  "description": "Free HTML to PDF conversion service using Puppeteer",
   "main": "api/generate-pdf.js",
+  "license": "MIT",
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'No build step required'",
-    "deploy": "vercel --prod"
+    "deploy": "vercel --prod",
+    "build": "next build"
   },
   "dependencies": {
-    "playwright-aws-lambda": "^0.10.0"
-  },
-  "devDependencies": {
-    "vercel": "^32.0.0"
-  },
-  "engines": {
-    "node": "22.x"
+    "@sparticuz/chromium": "^123.0.0",
+    "puppeteer-core": "^22.0.0"
   }
 }

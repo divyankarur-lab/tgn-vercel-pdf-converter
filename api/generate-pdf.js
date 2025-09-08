@@ -1,4 +1,5 @@
-const playwright = require('playwright-aws-lambda');
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 
 export default async function handler(req, res) {
   // Handle CORS preflight
@@ -23,17 +24,23 @@ export default async function handler(req, res) {
   let browser;
   
   try {
-    console.log('🚀 Starting PDF generation with Playwright AWS Lambda...');
+    console.log('🚀 Starting PDF generation with @sparticuz/chromium + postinstall fix...');
     
-    // Launch browser with Playwright for serverless environments
-    browser = await playwright.launchChromium();
+    // Launch browser with updated Chromium package and postinstall dependencies
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
+    });
     
     const page = await browser.newPage();
     
     // Use a robust method to set content and wait for it to load
     await page.setContent(html, {
-      waitUntil: 'networkidle',
-      timeout: 30000 // Set to Vercel's maximum timeout
+      waitUntil: 'networkidle0',
+      timeout: 25000 // Slightly less than Vercel's timeout
     });
 
     console.log('📄 Generating PDF...');
