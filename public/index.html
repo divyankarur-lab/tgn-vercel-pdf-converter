@@ -30,10 +30,12 @@
         .error { background: #ffebee; color: #c62828; }
         #content { 
             border: 5px solid #34C759; 
-            padding: 40px; 
+            padding: 30px; 
             margin: 20px 0;
             background: white;
             font-family: Arial, sans-serif;
+            max-width: 700px; /* Prevent content from being too wide */
+            box-sizing: border-box;
         }
         #content img { 
             width: 100px; 
@@ -117,7 +119,11 @@
         <button onclick="generatePDFNoImages()" id="testBtn" style="background: #ff6b6b;">🧪 Test PDF (No Images)</button>
         
         <div id="content">
-            <img src="https://ik.imagekit.io/divyankarur/o__2_-removebg-preview.png?updatedAt=1755246312760" alt="TGN Logo">
+            <!-- Temporarily removed problematic external image -->
+            <!-- <img src="https://ik.imagekit.io/divyankarur/o__2_-removebg-preview.png?updatedAt=1755246312760" alt="TGN Logo"> -->
+            <div style="text-align: center; margin-bottom: 20px; color: #34C759; font-size: 24px; font-weight: bold;">
+                🌟 THE GOOD WILL NETWORK 🌟
+            </div>
             <h1>the <span class="goodwill">goodwill</span> agreement</h1>
             <hr>
             <p><strong>Freelancer:</strong> <span id="preview-freelancer">John Smith</span></p>
@@ -172,22 +178,31 @@
                 }
                 
                 console.log('All images loaded, generating PDF...');
+                console.log('Content dimensions:', contentDiv.offsetWidth, 'x', contentDiv.offsetHeight);
                 
-                // Simple PDF options - minimal configuration
+                // Optimized PDF options to prevent cropping
                 const options = {
-                    margin: 0.5, // inches
+                    margin: [0.5, 0.5, 0.5, 0.5], // top, right, bottom, left in inches
                     filename: 'goodwill-agreement.pdf',
-                    image: { type: 'jpeg', quality: 1.0 },
+                    image: { 
+                        type: 'jpeg', 
+                        quality: 0.98 
+                    },
                     html2canvas: { 
-                        scale: 2,
+                        scale: 1.5, // Reduced scale to fit better
                         useCORS: true,
                         logging: true,
-                        allowTaint: true
+                        allowTaint: true,
+                        width: contentDiv.offsetWidth, // Use actual content width
+                        height: contentDiv.offsetHeight, // Use actual content height
+                        scrollX: 0,
+                        scrollY: 0
                     },
                     jsPDF: { 
                         unit: 'in', 
-                        format: 'a4', 
-                        orientation: 'portrait' 
+                        format: [8.3, 11.7], // A4 size in inches (210mm x 297mm)
+                        orientation: 'portrait',
+                        compress: true
                     }
                 };
                 
@@ -208,34 +223,61 @@
             }
         }
         
-        // Debug function to test without images
+        // Debug function to test without images - IMPROVED
         async function generatePDFNoImages() {
             try {
-                document.getElementById('status').innerHTML = '🔄 Generating PDF (text only)...';
+                document.getElementById('status').innerHTML = '🔄 Generating test PDF...';
                 document.getElementById('status').className = 'status loading';
                 
-                // Create a simple test div
+                // Create a simple test div with minimal content
                 const testDiv = document.createElement('div');
-                testDiv.innerHTML = `
-                    <div style="border: 5px solid #34C759; padding: 40px; font-family: Arial;">
-                        <h1 style="text-align: center; font-size: 40px;">TEST AGREEMENT</h1>
-                        <hr style="border: 0; height: 1px; background: #ccc; margin: 20px 0;">
-                        <p style="font-size: 18px;">This is a test PDF without images.</p>
-                        <p style="font-size: 18px;">Freelancer: ${document.getElementById('freelancerName').value}</p>
-                        <p style="font-size: 18px;">Producer: ${document.getElementById('producerName').value}</p>
-                    </div>
-                `;
+                testDiv.style.width = '600px';
+                testDiv.style.height = '400px';
+                testDiv.style.backgroundColor = 'white';
+                testDiv.style.border = '3px solid #34C759';
+                testDiv.style.padding = '30px';
+                testDiv.style.fontFamily = 'Arial, sans-serif';
                 testDiv.style.position = 'absolute';
                 testDiv.style.top = '-9999px';
-                document.body.appendChild(testDiv);
+                testDiv.style.left = '0';
                 
-                await html2pdf().from(testDiv).save('test-agreement.pdf');
+                testDiv.innerHTML = `
+                    <h1 style="color: #34C759; text-align: center; font-size: 32px; margin: 0 0 20px 0;">
+                        TEST AGREEMENT
+                    </h1>
+                    <hr style="border: none; height: 2px; background: #34C759; margin: 20px 0;">
+                    <p style="font-size: 16px; margin: 15px 0; color: black;">
+                        <strong>Freelancer:</strong> ${document.getElementById('freelancerName').value || 'Test Freelancer'}
+                    </p>
+                    <p style="font-size: 16px; margin: 15px 0; color: black;">
+                        <strong>Producer:</strong> ${document.getElementById('producerName').value || 'Test Producer'}
+                    </p>
+                    <p style="font-size: 14px; margin: 15px 0; color: black;">
+                        This is a simple test PDF to verify the PDF generation is working.
+                    </p>
+                `;
+                
+                document.body.appendChild(testDiv);
+                console.log('Test div created, dimensions:', testDiv.offsetWidth, 'x', testDiv.offsetHeight);
+                
+                // Very simple options
+                const simpleOptions = {
+                    margin: 0.5,
+                    filename: 'test-simple.pdf',
+                    html2canvas: { scale: 1 },
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                };
+                
+                console.log('Starting simple PDF generation...');
+                await html2pdf().set(simpleOptions).from(testDiv).save();
+                console.log('Simple PDF completed!');
                 
                 document.body.removeChild(testDiv);
-                document.getElementById('status').innerHTML = '🎉 Test PDF generated!';
+                document.getElementById('status').innerHTML = '🎉 Test PDF generated successfully!';
                 document.getElementById('status').className = 'status success';
                 
             } catch (error) {
+                console.error('Test PDF error:', error);
                 document.getElementById('status').innerHTML = '❌ Test failed: ' + error.message;
                 document.getElementById('status').className = 'status error';
             }
