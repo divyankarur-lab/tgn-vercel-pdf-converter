@@ -25,51 +25,20 @@ export default async function handler(req, res) {
   
   try {
     console.log('🚀 Starting PDF generation...');
-    console.log('Chromium version:', await chromium.executablePath());
+    console.log('Runtime environment:', process.env.VERCEL ? 'Vercel' : 'Local');
+    
+    // Get executable path
+    const executablePath = await chromium.executablePath();
+    console.log('Chromium executable path:', executablePath);
 
-    // Optimized Chromium args for Vercel
-    const browserArgs = [
-      ...chromium.args,
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--disable-gpu',
-      '--window-size=1920,1080',
-      '--single-process',
-      '--disable-features=VizDisplayCompositor',
-      '--disable-background-networking',
-      '--disable-background-timer-throttling',
-      '--disable-renderer-backgrounding',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-client-side-phishing-detection',
-      '--disable-component-update',
-      '--disable-default-apps',
-      '--disable-domain-reliability',
-      '--disable-extensions',
-      '--disable-features=AudioServiceOutOfProcess',
-      '--disable-hang-monitor',
-      '--disable-ipc-flooding-protection',
-      '--disable-popup-blocking',
-      '--disable-prompt-on-repost',
-      '--disable-sync',
-      '--disable-translate',
-      '--disable-windows10-custom-titlebar',
-      '--metrics-recording-only',
-      '--no-first-run',
-      '--no-default-browser-check',
-      '--password-store=basic',
-      '--use-mock-keychain'
-    ];
-
-    // Launch Chrome with optimized settings for Vercel
+    // Simple, stable configuration for Vercel
     browser = await puppeteer.launch({
-      args: browserArgs,
+      args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: chromium.headless,
       ignoreHTTPSErrors: true,
-      ignoreDefaultArgs: ['--disable-extensions'],
+      ignoreDefaultArgs: false
     });
 
     const page = await browser.newPage();
