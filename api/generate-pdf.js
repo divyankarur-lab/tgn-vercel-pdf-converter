@@ -52,8 +52,11 @@ export default async function handler(req, res) {
     const elements = document.body.querySelectorAll('h1, h2, h3, p, li, div');
     
     for (const element of elements) {
-      const text = element.textContent?.trim();
+      let text = element.textContent?.trim();
       if (!text) continue;
+      
+      // Clean text to avoid encoding issues
+      text = text.replace(/[\r\n\t]/g, ' ').replace(/\s+/g, ' ').trim();
       
       let fontSize = 12;
       let currentFont = font;
