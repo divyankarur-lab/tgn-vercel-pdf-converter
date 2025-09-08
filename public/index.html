@@ -114,6 +114,7 @@
         
         <button onclick="generatePDF()" id="generateBtn">📄 Generate PDF</button>
         <button onclick="updatePreview()" id="previewBtn">👀 Update Preview</button>
+        <button onclick="generatePDFNoImages()" id="testBtn" style="background: #ff6b6b;">🧪 Test PDF (No Images)</button>
         
         <div id="content">
             <img src="https://ik.imagekit.io/divyankarur/o__2_-removebg-preview.png?updatedAt=1755246312760" alt="TGN Logo">
@@ -139,124 +140,61 @@
                 document.getElementById('projectDetails').value || 'Project details to be specified';
         }
 
-        // Generate PDF function
+        // Generate PDF function - SIMPLIFIED APPROACH
         async function generatePDF() {
             try {
                 document.getElementById('status').innerHTML = '🔄 Generating PDF...';
                 document.getElementById('status').className = 'status loading';
                 document.getElementById('generateBtn').disabled = true;
                 
-                // Update preview before generating
+                // Update preview first
                 updatePreview();
                 
-                // Create temporary container for PDF generation
-                const sourceDiv = document.getElementById('content');
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = sourceDiv.innerHTML;
+                // Wait a moment for preview to update
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
-                // Better styling for PDF conversion
-                tempDiv.style.width = '794px'; // A4 width in pixels
-                tempDiv.style.minHeight = '1123px'; // A4 height in pixels  
-                tempDiv.style.padding = '40px';
-                tempDiv.style.margin = '0';
-                tempDiv.style.backgroundColor = 'white';
-                tempDiv.style.fontFamily = 'Arial, sans-serif';
-                tempDiv.style.fontSize = '16px';
-                tempDiv.style.lineHeight = '1.5';
-                tempDiv.style.color = 'black';
-                tempDiv.style.position = 'absolute';
-                tempDiv.style.top = '-9999px';
-                tempDiv.style.left = '-9999px';
-                tempDiv.style.border = '5px solid #34C759';
+                // Get the content div directly (no cloning!)
+                const contentDiv = document.getElementById('content');
                 
-                // Style all elements
-                const allElements = tempDiv.querySelectorAll('*');
-                allElements.forEach(el => {
-                    el.style.fontFamily = 'Arial, sans-serif';
-                });
+                // Wait for all images to be fully loaded
+                const images = contentDiv.querySelectorAll('img');
+                console.log('Found images:', images.length);
                 
-                // Style specific elements
-                const h1 = tempDiv.querySelector('h1');
-                if (h1) {
-                    h1.style.textAlign = 'center';
-                    h1.style.fontSize = '40px';
-                    h1.style.color = '#1c1c1c';
-                    h1.style.margin = '0 0 20px 0';
-                }
-                
-                const goodwillSpan = tempDiv.querySelector('.goodwill');
-                if (goodwillSpan) goodwillSpan.style.color = '#34C759';
-                
-                const img = tempDiv.querySelector('img');
-                if (img) {
-                    img.style.width = '100px';
-                    img.style.height = 'auto';
-                    img.style.display = 'block';
-                    img.style.margin = '0 auto 20px';
-                }
-                
-                const hrs = tempDiv.querySelectorAll('hr');
-                hrs.forEach(hr => {
-                    hr.style.border = '0';
-                    hr.style.height = '1px';
-                    hr.style.background = '#e0e5ec';
-                    hr.style.margin = '20px 0';
-                });
-                
-                const ps = tempDiv.querySelectorAll('p');
-                ps.forEach(p => {
-                    p.style.fontSize = '18px';
-                    p.style.lineHeight = '1.5';
-                    p.style.margin = '15px 0';
-                });
-                
-                document.body.appendChild(tempDiv);
-                
-                // Wait for images to load
-                const images = tempDiv.querySelectorAll('img');
-                const imagePromises = Array.from(images).map(img => {
-                    return new Promise((resolve) => {
-                        if (img.complete) {
-                            resolve();
-                        } else {
+                for (let img of images) {
+                    if (!img.complete) {
+                        console.log('Waiting for image to load:', img.src);
+                        await new Promise((resolve) => {
                             img.onload = resolve;
                             img.onerror = resolve;
-                            setTimeout(resolve, 5000);
-                        }
-                    });
-                });
+                            setTimeout(resolve, 3000); // Max 3 second wait per image
+                        });
+                    }
+                }
                 
-                await Promise.all(imagePromises);
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log('All images loaded, generating PDF...');
                 
-                // PDF generation options
+                // Simple PDF options - minimal configuration
                 const options = {
-                    margin: [10, 10, 10, 10],
+                    margin: 0.5, // inches
                     filename: 'goodwill-agreement.pdf',
-                    image: { 
-                        type: 'jpeg', 
-                        quality: 0.95
-                    },
+                    image: { type: 'jpeg', quality: 1.0 },
                     html2canvas: { 
-                        scale: 1.5,
+                        scale: 2,
                         useCORS: true,
-                        allowTaint: true,
-                        letterRendering: true,
-                        width: 794,
-                        height: 1123
+                        logging: true,
+                        allowTaint: true
                     },
                     jsPDF: { 
-                        unit: 'mm', 
+                        unit: 'in', 
                         format: 'a4', 
-                        orientation: 'portrait'
+                        orientation: 'portrait' 
                     }
                 };
                 
-                // Generate PDF
-                await html2pdf().set(options).from(tempDiv).save();
-                
-                // Clean up
-                document.body.removeChild(tempDiv);
+                // Generate PDF directly from visible content
+                console.log('Starting PDF generation...');
+                await html2pdf().set(options).from(contentDiv).save();
+                console.log('PDF generation completed!');
                 
                 document.getElementById('status').innerHTML = '🎉 PDF generated and downloaded successfully!';
                 document.getElementById('status').className = 'status success';
@@ -264,9 +202,42 @@
                 
             } catch (error) {
                 console.error('PDF generation error:', error);
-                document.getElementById('status').innerHTML = '❌ Error generating PDF: ' + error.message;
+                document.getElementById('status').innerHTML = '❌ Error: ' + error.message;
                 document.getElementById('status').className = 'status error';
                 document.getElementById('generateBtn').disabled = false;
+            }
+        }
+        
+        // Debug function to test without images
+        async function generatePDFNoImages() {
+            try {
+                document.getElementById('status').innerHTML = '🔄 Generating PDF (text only)...';
+                document.getElementById('status').className = 'status loading';
+                
+                // Create a simple test div
+                const testDiv = document.createElement('div');
+                testDiv.innerHTML = `
+                    <div style="border: 5px solid #34C759; padding: 40px; font-family: Arial;">
+                        <h1 style="text-align: center; font-size: 40px;">TEST AGREEMENT</h1>
+                        <hr style="border: 0; height: 1px; background: #ccc; margin: 20px 0;">
+                        <p style="font-size: 18px;">This is a test PDF without images.</p>
+                        <p style="font-size: 18px;">Freelancer: ${document.getElementById('freelancerName').value}</p>
+                        <p style="font-size: 18px;">Producer: ${document.getElementById('producerName').value}</p>
+                    </div>
+                `;
+                testDiv.style.position = 'absolute';
+                testDiv.style.top = '-9999px';
+                document.body.appendChild(testDiv);
+                
+                await html2pdf().from(testDiv).save('test-agreement.pdf');
+                
+                document.body.removeChild(testDiv);
+                document.getElementById('status').innerHTML = '🎉 Test PDF generated!';
+                document.getElementById('status').className = 'status success';
+                
+            } catch (error) {
+                document.getElementById('status').innerHTML = '❌ Test failed: ' + error.message;
+                document.getElementById('status').className = 'status error';
             }
         }
 
