@@ -1,6 +1,10 @@
 import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 
+// Force chromium to use bundled libraries
+chromium.setHeadlessMode = true;
+chromium.setGraphicsMode = false;
+
 export default async function handler(req, res) {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -26,11 +30,22 @@ export default async function handler(req, res) {
   try {
     console.log('🚀 Starting PDF generation with @sparticuz/chromium + postinstall fix...');
     
-    // Launch browser with updated Chromium package and postinstall dependencies
+    // Launch browser with stable configuration and explicit args
+    const executablePath = await chromium.executablePath();
+    console.log('🔍 Chromium executable path:', executablePath);
+    
     browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-web-security',
+        '--disable-features=AudioServiceOutOfProcess'
+      ],
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: chromium.headless,
       ignoreHTTPSErrors: true,
     });
