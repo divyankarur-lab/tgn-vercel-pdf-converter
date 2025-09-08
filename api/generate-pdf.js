@@ -1,4 +1,4 @@
-import { chromium } from 'playwright-aws-lambda';
+import playwright from 'playwright-aws-lambda';
 
 export default async function handler(req, res) {
   // Handle CORS preflight
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     console.log('Runtime environment:', process.env.VERCEL ? 'Vercel' : 'Local');
     
     // Launch browser with playwright-aws-lambda (more reliable for serverless)
-    browser = await chromium.launch({
+    browser = await playwright.launchChromium({
       headless: true,
       args: [
         '--no-sandbox',
