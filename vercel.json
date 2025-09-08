@@ -1,15 +1,7 @@
 {
-  "build": {
-    "env": {
-      "PLAYWRIGHT_BROWSERS_PATH": "0",
-      "PUPPETEER_CACHE_DIR": "/tmp/.puppeteer_cache",
-      "PUPPETEER_EXECUTABLE_PATH": "/opt/nodejs/lib/node_modules/@sparticuz/chromium/bin",
-      "CHROMIUM_PATH": "/opt/nodejs/lib/node_modules/@sparticuz/chromium/bin"
-    }
-  },
   "functions": {
     "api/generate-pdf.js": {
-      "maxDuration": 30
+      "maxDuration": 15
     }
   },
   "rewrites": [
