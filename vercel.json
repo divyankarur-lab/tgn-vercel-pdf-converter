@@ -1,11 +1,14 @@
 {
+  "build": {
+    "env": {
+      "PLAYWRIGHT_BROWSERS_PATH": "0",
+      "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
+    }
+  },
   "functions": {
     "api/generate-pdf.js": {
       "maxDuration": 30,
       "memory": 1024
     }
-  },
-  "env": {
-    "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
   }
 }
