@@ -4,8 +4,17 @@
       "maxDuration": 30
     }
   },
-  "regions": ["iad1"],
   "env": {
-    "NODE_ENV": "production"
-  }
+    "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
+  },
+  "buildCommand": "npm install",
+  "builds": [
+    {
+      "src": "api/generate-pdf.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "node_modules/@sparticuz/chromium/bin/*"
+      }
+    }
+  ]
 }
