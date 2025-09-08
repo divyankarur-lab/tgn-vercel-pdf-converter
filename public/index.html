@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>TGN Agreement PDF Generator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -146,7 +147,7 @@
                 document.getElementById('projectDetails').value || 'Project details to be specified';
         }
 
-        // Generate PDF function - SIMPLIFIED APPROACH
+        // Generate PDF function - DIRECT html2canvas + jsPDF approach
         async function generatePDF() {
             try {
                 document.getElementById('status').innerHTML = '🔄 Generating PDF...';
@@ -155,61 +156,63 @@
                 
                 // Update preview first
                 updatePreview();
-                
-                // Wait a moment for preview to update
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                // Get the content div directly (no cloning!)
                 const contentDiv = document.getElementById('content');
-                
-                // Wait for all images to be fully loaded
-                const images = contentDiv.querySelectorAll('img');
-                console.log('Found images:', images.length);
-                
-                for (let img of images) {
-                    if (!img.complete) {
-                        console.log('Waiting for image to load:', img.src);
-                        await new Promise((resolve) => {
-                            img.onload = resolve;
-                            img.onerror = resolve;
-                            setTimeout(resolve, 3000); // Max 3 second wait per image
-                        });
-                    }
-                }
-                
-                console.log('All images loaded, generating PDF...');
                 console.log('Content dimensions:', contentDiv.offsetWidth, 'x', contentDiv.offsetHeight);
                 
-                // Optimized PDF options to prevent cropping
-                const options = {
-                    margin: [0.5, 0.5, 0.5, 0.5], // top, right, bottom, left in inches
-                    filename: 'goodwill-agreement.pdf',
-                    image: { 
-                        type: 'jpeg', 
-                        quality: 0.98 
-                    },
-                    html2canvas: { 
-                        scale: 1.5, // Reduced scale to fit better
-                        useCORS: true,
-                        logging: true,
-                        allowTaint: true,
-                        width: contentDiv.offsetWidth, // Use actual content width
-                        height: contentDiv.offsetHeight, // Use actual content height
-                        scrollX: 0,
-                        scrollY: 0
-                    },
-                    jsPDF: { 
-                        unit: 'in', 
-                        format: [8.3, 11.7], // A4 size in inches (210mm x 297mm)
-                        orientation: 'portrait',
-                        compress: true
-                    }
-                };
+                // Use html2canvas directly
+                console.log('Creating canvas from content...');
+                const canvas = await html2canvas(contentDiv, {
+                    scale: 2, // Higher quality
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: true,
+                    width: contentDiv.offsetWidth,
+                    height: contentDiv.offsetHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    backgroundColor: '#ffffff'
+                });
                 
-                // Generate PDF directly from visible content
-                console.log('Starting PDF generation...');
-                await html2pdf().set(options).from(contentDiv).save();
-                console.log('PDF generation completed!');
+                console.log('Canvas created:', canvas.width, 'x', canvas.height);
+                
+                // Create PDF with jsPDF
+                const { jsPDF } = window.jspdf;
+                
+                // A4 dimensions in mm
+                const pdfWidth = 210; 
+                const pdfHeight = 297;
+                
+                // Calculate scaling to fit content in PDF
+                const contentWidth = canvas.width / 2; // Divide by scale
+                const contentHeight = canvas.height / 2; // Divide by scale
+                
+                // Add margins
+                const margin = 15; // 15mm margin
+                const availableWidth = pdfWidth - (margin * 2);
+                const availableHeight = pdfHeight - (margin * 2);
+                
+                // Scale to fit within available space
+                const scaleX = availableWidth / contentWidth;
+                const scaleY = availableHeight / contentHeight;
+                const scale = Math.min(scaleX, scaleY, 1); // Don't scale up
+                
+                const finalWidth = contentWidth * scale;
+                const finalHeight = contentHeight * scale;
+                
+                console.log('PDF scaling:', scale, 'Final size:', finalWidth, 'x', finalHeight);
+                
+                // Create PDF
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                // Add canvas as image to PDF
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                pdf.addImage(imgData, 'JPEG', margin, margin, finalWidth, finalHeight);
+                
+                // Save PDF
+                pdf.save('goodwill-agreement.pdf');
+                console.log('PDF saved successfully!');
                 
                 document.getElementById('status').innerHTML = '🎉 PDF generated and downloaded successfully!';
                 document.getElementById('status').className = 'status success';
@@ -223,13 +226,13 @@
             }
         }
         
-        // Debug function to test without images - IMPROVED
+        // Debug function using html2canvas + jsPDF directly
         async function generatePDFNoImages() {
             try {
                 document.getElementById('status').innerHTML = '🔄 Generating test PDF...';
                 document.getElementById('status').className = 'status loading';
                 
-                // Create a simple test div with minimal content
+                // Create a simple test div
                 const testDiv = document.createElement('div');
                 testDiv.style.width = '600px';
                 testDiv.style.height = '400px';
@@ -238,8 +241,9 @@
                 testDiv.style.padding = '30px';
                 testDiv.style.fontFamily = 'Arial, sans-serif';
                 testDiv.style.position = 'absolute';
-                testDiv.style.top = '-9999px';
+                testDiv.style.top = '0';
                 testDiv.style.left = '0';
+                testDiv.style.zIndex = '9999';
                 
                 testDiv.innerHTML = `
                     <h1 style="color: #34C759; text-align: center; font-size: 32px; margin: 0 0 20px 0;">
@@ -253,26 +257,41 @@
                         <strong>Producer:</strong> ${document.getElementById('producerName').value || 'Test Producer'}
                     </p>
                     <p style="font-size: 14px; margin: 15px 0; color: black;">
-                        This is a simple test PDF to verify the PDF generation is working.
+                        This is a simple test to verify PDF generation works correctly.
                     </p>
                 `;
                 
                 document.body.appendChild(testDiv);
                 console.log('Test div created, dimensions:', testDiv.offsetWidth, 'x', testDiv.offsetHeight);
                 
-                // Very simple options
-                const simpleOptions = {
-                    margin: 0.5,
-                    filename: 'test-simple.pdf',
-                    html2canvas: { scale: 1 },
-                    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-                };
+                // Wait a moment for rendering
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
-                console.log('Starting simple PDF generation...');
-                await html2pdf().set(simpleOptions).from(testDiv).save();
-                console.log('Simple PDF completed!');
+                // Create canvas
+                console.log('Creating test canvas...');
+                const canvas = await html2canvas(testDiv, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: true
+                });
                 
+                console.log('Test canvas created:', canvas.width, 'x', canvas.height);
+                
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                // Add image to PDF (simple approach)
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                pdf.addImage(imgData, 'JPEG', 10, 10, 190, 0); // Auto height
+                
+                // Save
+                pdf.save('test-simple.pdf');
+                console.log('Test PDF saved!');
+                
+                // Clean up
                 document.body.removeChild(testDiv);
+                
                 document.getElementById('status').innerHTML = '🎉 Test PDF generated successfully!';
                 document.getElementById('status').className = 'status success';
                 
