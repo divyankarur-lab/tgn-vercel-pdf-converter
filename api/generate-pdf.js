@@ -1,5 +1,4 @@
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+const playwright = require('playwright-aws-lambda');
 
 export default async function handler(req, res) {
   // Handle CORS preflight
@@ -24,26 +23,16 @@ export default async function handler(req, res) {
   let browser;
   
   try {
-    console.log('🚀 Starting PDF generation with @sparticuz/chromium...');
+    console.log('🚀 Starting PDF generation with Playwright AWS Lambda...');
     
-    // --- The primary fix for the dependency issue is here ---
-    // Use the explicit executable path and arguments for serverless environments.
-    const executablePath = await chromium.executablePath();
-    console.log('Chromium executable path:', executablePath);
+    // Launch browser with Playwright for serverless environments
+    browser = await playwright.launchChromium();
     
-    browser = await puppeteer.launch({
-      args: [...chromium.args, '--font-render-hinting=none'],
-      defaultViewport: chromium.defaultViewport,
-      executablePath: executablePath,
-      headless: chromium.headless,
-      ignoreHTTPSErrors: true,
-    });
-
     const page = await browser.newPage();
     
     // Use a robust method to set content and wait for it to load
     await page.setContent(html, {
-      waitUntil: 'networkidle0',
+      waitUntil: 'networkidle',
       timeout: 30000 // Set to Vercel's maximum timeout
     });
 

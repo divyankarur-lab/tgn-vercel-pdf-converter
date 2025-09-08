@@ -9,8 +9,7 @@
     "deploy": "vercel --prod"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^126.0.0",
-    "puppeteer-core": "^22.15.0"
+    "playwright-aws-lambda": "^0.10.0"
   },
   "devDependencies": {
     "vercel": "^32.0.0"
