@@ -1,5 +1,4 @@
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import { chromium } from 'playwright-aws-lambda';
 
 export default async function handler(req, res) {
   // Handle CORS preflight
@@ -24,23 +23,29 @@ export default async function handler(req, res) {
   let browser;
   
   try {
-    console.log('🚀 Starting PDF generation...');
+    console.log('🚀 Starting PDF generation with Playwright...');
     console.log('Runtime environment:', process.env.VERCEL ? 'Vercel' : 'Local');
     
-    // Launch browser with modern @sparticuz/chromium
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-      ignoreHTTPSErrors: true,
+    // Launch browser with playwright-aws-lambda (more reliable for serverless)
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
+      ]
     });
 
     const page = await browser.newPage();
     
     // Set content with proper loading conditions
     await page.setContent(html, {
-      waitUntil: ['networkidle0', 'domcontentloaded'],
+      waitUntil: 'networkidle',
       timeout: 25000 // Leave 5s buffer for Vercel's 30s limit
     });
 
