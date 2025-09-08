@@ -9,8 +9,8 @@
     "deploy": "vercel --prod"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^110.0.0",
-    "puppeteer-core": "^19.6.0"
+    "pdf-lib": "^1.17.1",
+    "jsdom": "^22.0.0"
   },
   "devDependencies": {
     "vercel": "^32.0.0"
